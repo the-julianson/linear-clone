@@ -1,8 +1,17 @@
 import { LLMProviderFactory, type LLMProvider } from './llm-providers'
 import { VectorStoreManager } from './vector-store'
 import { db } from '@/db'
-import { chatMessages, chatSessions } from '@/db/schema'
+import { chatMessages } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { SystemMessage, HumanMessage } from '@langchain/core/messages'
+
+interface ChatHistoryMessage {
+  id: number
+  sessionId: string
+  role: string
+  content: string
+  createdAt: Date
+}
 
 export class ChatService {
   private vectorStore: VectorStoreManager
@@ -29,22 +38,18 @@ export class ChatService {
       
       // 4. Generate response with LLM
       const llm = LLMProviderFactory.createProvider(llmProvider)
-      const response = await llm.invoke([
-        {
-          role: 'system',
-          content: `You are a helpful assistant for the Linear Clone FAQ system. 
+      const messages = [
+        new SystemMessage(`You are a helpful assistant for the Linear Clone FAQ system. 
           Answer questions based on the provided FAQ content. If the question 
-          cannot be answered from the FAQ content, say so politely.`,
-        },
-        {
-          role: 'user',
-          content: context + '\n\nUser Question: ' + question,
-        },
-      ])
+          cannot be answered from the FAQ content, say so politely.`),
+        new HumanMessage(context + '\n\nUser Question: ' + question),
+      ]
+      
+      const response = await llm.invoke(messages)
 
       // 5. Save conversation
       await this.saveMessage(sessionId, 'user', question)
-      await this.saveMessage(sessionId, 'assistant', response.content)
+      await this.saveMessage(sessionId, 'assistant', response.content as string)
 
       return {
         answer: response.content,
@@ -56,7 +61,7 @@ export class ChatService {
     }
   }
 
-  private async getConversationHistory(sessionId: string) {
+  private async getConversationHistory(sessionId: string): Promise<ChatHistoryMessage[]> {
     const messages = await db
       .select()
       .from(chatMessages)
@@ -67,7 +72,7 @@ export class ChatService {
     return messages
   }
 
-  private buildContext(relevantFAQs: string[], history: any[]) {
+  private buildContext(relevantFAQs: string[], history: ChatHistoryMessage[]): string {
     let context = 'Relevant FAQ Content:\n'
     relevantFAQs.forEach((faq, index) => {
       context += `${index + 1}. ${faq}\n`
@@ -83,7 +88,7 @@ export class ChatService {
     return context
   }
 
-  private async saveMessage(sessionId: string, role: string, content: string) {
+  private async saveMessage(sessionId: string, role: string, content: string): Promise<void> {
     await db.insert(chatMessages).values({
       sessionId,
       role,

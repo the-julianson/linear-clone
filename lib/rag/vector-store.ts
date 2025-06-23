@@ -42,7 +42,7 @@ export class VectorStoreManager {
     }
   }
 
-  async searchSimilar(query: string, limit: number = 3) {
+  async searchSimilar(query: string, limit: number = 3): Promise<string[]> {
     const collection = await this.client.getCollection({
       name: this.collectionName,
     })
@@ -54,6 +54,6 @@ export class VectorStoreManager {
       nResults: limit,
     })
 
-    return results.documents?.[0] || []
+    return (results.documents?.[0] as string[]) || []
   }
 }

@@ -9,7 +9,7 @@ export class LLMProviderFactory {
     switch (provider) {
       case 'openai':
         return new ChatOpenAI({
-          model: 'gpt-3.5-turbo',
+          modelName: 'gpt-3.5-turbo',
           temperature: 0.7,
         })
       case 'google':
