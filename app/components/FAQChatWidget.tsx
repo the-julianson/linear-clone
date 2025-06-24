@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { handleFAQChat, createChatSession } from '@/app/actions/rag'
 import { Send, Bot, User } from 'lucide-react'
 import Button from './ui/Button'
 
@@ -33,8 +32,9 @@ function FAQChatWidget({ llmProvider = 'openai' }: FAQChatWidgetProps) {
 
   const initializeChat = async () => {
     try {
+      const { createChatSession } = await import('@/app/actions/rag')
       const result = await createChatSession()
-      if (result.success) {
+      if (result.success && result.sessionId) {
         setSessionId(result.sessionId)
       }
     } catch (error) {
@@ -62,13 +62,15 @@ function FAQChatWidget({ llmProvider = 'openai' }: FAQChatWidgetProps) {
     setIsLoading(true)
 
     try {
+      // Use dynamic import to avoid bundling server-side code
+      const { handleFAQChat } = await import('@/app/actions/rag')
       const result = await handleFAQChat(input, sessionId, llmProvider)
       
-      if (result.success) {
+      if (result.success && result.data?.answer) {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: result.data.answer,
+          content: typeof result.data.answer === 'string' ? result.data.answer : String(result.data.answer),
           timestamp: new Date(),
         }
         setMessages(prev => [...prev, assistantMessage])
@@ -76,7 +78,7 @@ function FAQChatWidget({ llmProvider = 'openai' }: FAQChatWidgetProps) {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: `Error: ${result.error}`,
+          content: `Error: ${result.error || 'Unknown error'}`,
           timestamp: new Date(),
         }
         setMessages(prev => [...prev, errorMessage])
@@ -85,7 +87,7 @@ function FAQChatWidget({ llmProvider = 'openai' }: FAQChatWidgetProps) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'An unexpected error occurred. Please try again.',
+        content: `An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: new Date(),
       }
       setMessages(prev => [...prev, errorMessage])

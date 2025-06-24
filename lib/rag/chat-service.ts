@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { chatMessages } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
+import { configureLangSmith, createRunName } from './langsmith-config'
 
 interface ChatHistoryMessage {
   id: number
@@ -18,6 +19,8 @@ export class ChatService {
 
   constructor() {
     this.vectorStore = new VectorStoreManager()
+    // Configure LangSmith on service initialization
+    configureLangSmith()
   }
 
   async processFAQQuestion(
@@ -26,12 +29,18 @@ export class ChatService {
     sessionId: string,
     llmProvider: LLMProvider = 'openai'
   ) {
+    const runName = createRunName('faq-question', `${llmProvider}-${sessionId}`)
+    
     try {
+      console.log(`[${runName}] Processing FAQ question: ${question.substring(0, 50)}...`)
+      
       // 1. Search for relevant FAQ content
       const relevantFAQs = await this.vectorStore.searchSimilar(question, 3)
+      console.log(`[${runName}] Found ${relevantFAQs.length} relevant FAQs`)
       
       // 2. Get conversation history
       const history = await this.getConversationHistory(sessionId)
+      console.log(`[${runName}] Retrieved ${history.length} conversation messages`)
       
       // 3. Create context prompt
       const context = this.buildContext(relevantFAQs, history)
@@ -45,7 +54,9 @@ export class ChatService {
         new HumanMessage(context + '\n\nUser Question: ' + question),
       ]
       
+      console.log(`[${runName}] Generating response with ${llmProvider}...`)
       const response = await llm.invoke(messages)
+      console.log(`[${runName}] Response generated successfully`)
 
       // 5. Save conversation
       await this.saveMessage(sessionId, 'user', question)
@@ -56,7 +67,7 @@ export class ChatService {
         relevantFAQs: relevantFAQs,
       }
     } catch (error) {
-      console.error('Error processing FAQ question:', error)
+      console.error(`[${runName}] Error processing FAQ question:`, error)
       throw new Error('Failed to process your question. Please try again.')
     }
   }
