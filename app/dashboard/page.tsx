@@ -1,4 +1,4 @@
-import { getCurrentUser, getIssues } from '@/lib/dal'
+import { getIssues } from '@/lib/dal'
 import Link from 'next/link'
 import Button from '../components/ui/Button'
 import { PlusIcon } from 'lucide-react'
@@ -7,8 +7,10 @@ import { formatRelativeTime } from '@/lib/utils'
 import { Priority, Status } from '@/lib/types'
 import { ISSUE_STATUS, ISSUE_PRIORITY } from '@/db/schema'
 
+// Force dynamic rendering since this page uses cookies for authentication
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
-  const user = await getCurrentUser()
   const issues = await getIssues()
 
   return (
