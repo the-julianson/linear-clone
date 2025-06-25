@@ -4,6 +4,8 @@ import Button from '../components/ui/Button'
 import { getCurrentUser } from '@/lib/dal'
 import SignOutButton from '../components/SignOutButton'
 
+export const dynamic = "force-dynamic";
+
 export default async function MarketingLayout({
   children,
 }: {

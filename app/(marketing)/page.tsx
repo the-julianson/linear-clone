@@ -3,6 +3,8 @@ import { Timestamp } from '../components/Timestamp'
 import Button from '../components/ui/Button'
 import { getCurrentUser } from '@/lib/dal'
 
+export const dynamic = "force-dynamic";
+
 export default async function LandingPage() {
   const user = await getCurrentUser()
 
