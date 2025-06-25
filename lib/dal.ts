@@ -9,6 +9,7 @@ import { unstable_cacheTag as cacheTag } from 'next/cache'
 export const getCurrentUser = cache(async () => {
   console.count('Getting the current user')
   const session = await getSession()
+  console.log('Session:', session)
   if (!session) return null
 
   try {

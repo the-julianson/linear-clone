@@ -1,12 +1,16 @@
 import Link from 'next/link'
 import { Timestamp } from '../components/Timestamp'
 import Button from '../components/ui/Button'
+import { getCurrentUser } from '@/lib/dal'
+import SignOutButton from '../components/SignOutButton'
 
 export default async function MarketingLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const user = await getCurrentUser()
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-gray-200 dark:border-dark-border-subtle bg-white dark:bg-dark-base">
@@ -38,12 +42,26 @@ export default async function MarketingLayout({
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center space-x-4">
-              <Link href="/signin">
-                <Button variant="outline">Sign in</Button>
-              </Link>
-              <Link href="/signup">
-                <Button>Sign up</Button>
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {user.email}
+                  </span>
+                  <Link href="/dashboard">
+                    <Button>Dashboard</Button>
+                  </Link>
+                  <SignOutButton />
+                </>
+              ) : (
+                <>
+                  <Link href="/signin">
+                    <Button variant="outline">Sign in</Button>
+                  </Link>
+                  <Link href="/signup">
+                    <Button>Sign up</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

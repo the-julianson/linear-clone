@@ -30,7 +30,7 @@ export class ChatService {
     llmProvider: LLMProvider = 'openai'
   ) {
     const runName = createRunName('faq-question', `${llmProvider}-${sessionId}`)
-    
+    console.log('--- processFAQQuestion called ---')
     try {
       console.log(`[${runName}] Processing FAQ question: ${question.substring(0, 50)}...`)
       

@@ -11,36 +11,16 @@ interface Message {
   timestamp: Date
 }
 
-interface FAQChatWidgetProps {
-  llmProvider?: string
-}
-
-function FAQChatWidget({ llmProvider = 'openai' }: FAQChatWidgetProps) {
+function FAQChatWidget() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    initializeChat()
-  }, [])
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
-
-  const initializeChat = async () => {
-    try {
-      const { createChatSession } = await import('@/app/actions/rag')
-      const result = await createChatSession()
-      if (result.success && result.sessionId) {
-        setSessionId(result.sessionId)
-      }
-    } catch (error) {
-      console.error('Failed to initialize chat:', error)
-    }
-  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -48,7 +28,7 @@ function FAQChatWidget({ llmProvider = 'openai' }: FAQChatWidgetProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || !sessionId || isLoading) return
+    if (!input.trim() || isLoading) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -62,18 +42,34 @@ function FAQChatWidget({ llmProvider = 'openai' }: FAQChatWidgetProps) {
     setIsLoading(true)
 
     try {
-      // Use dynamic import to avoid bundling server-side code
-      const { handleFAQChat } = await import('@/app/actions/rag')
-      const result = await handleFAQChat(input, sessionId, llmProvider)
+      // Use API route instead of server actions
+      const response = await fetch('/api/rag/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: input,
+          conversationId,
+        }),
+        credentials: 'include',
+      })
+
+      const result = await response.json()
       
-      if (result.success && result.data?.answer) {
+      if (response.ok && result.response) {
         const assistantMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: typeof result.data.answer === 'string' ? result.data.answer : String(result.data.answer),
+          content: result.response.answer || result.response,
           timestamp: new Date(),
         }
         setMessages(prev => [...prev, assistantMessage])
+        
+        // Update conversation ID if provided
+        if (result.conversationId) {
+          setConversationId(result.conversationId)
+        }
       } else {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
