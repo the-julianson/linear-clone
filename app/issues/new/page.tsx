@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import NewIssue from '@/app/components/NewIssue'
 
+// Force dynamic rendering since this page uses cookies for authentication
+export const dynamic = 'force-dynamic'
+
 export default async function NewIssuePage() {
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-8">

@@ -121,13 +121,14 @@ export const getSession = cache(async () => {
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get('auth_token')?.value
-
+    console.log('Session token:', token);
     if (!token) return null
     const payload = await verifyJWT(token)
-
+    console.log('Session payload:', payload);
     return payload ? { userId: payload.userId } : null
   } catch (error) {
     // Handle the specific prerendering error
+    console.log('Error getting session:', error);
     if (
       error instanceof Error &&
       error.message.includes('During prerendering, `cookies()` rejects')
@@ -139,6 +140,17 @@ export const getSession = cache(async () => {
     }
 
     console.error('Error getting session:', error)
+    return null
+  }
+})
+
+// Get current JWT token from cookies (for API calls)
+export const getCurrentToken = cache(async () => {
+  try {
+    const cookieStore = await cookies()
+    return cookieStore.get('auth_token')?.value || null
+  } catch (error) {
+    console.error('Error getting current token:', error)
     return null
   }
 })

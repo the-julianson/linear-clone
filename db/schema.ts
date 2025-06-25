@@ -59,3 +59,30 @@ export const ISSUE_PRIORITY = {
   medium: { label: 'Medium', value: 'medium' },
   high: { label: 'High', value: 'high' },
 }
+
+// Add new tables for RAG functionality
+
+export const chatSessions = pgTable('chat_sessions', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  sessionId: text('session_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const chatMessages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
+  sessionId: text('session_id').notNull(),
+  role: text('role').notNull(), // 'user' | 'assistant'
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+export const faqEmbeddings = pgTable('faq_embeddings', {
+  id: serial('id').primaryKey(),
+  question: text('question').notNull(),
+  answer: text('answer').notNull(),
+  embedding: text('embedding').notNull(), // JSON string of embedding
+  chunkId: text('chunk_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})

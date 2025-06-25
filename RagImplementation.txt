@@ -1,0 +1,59 @@
+┌─────────────────────────────────────────────────────────────────┐
+│                    RAG Integration Architecture                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Frontend Layer (Client Components)                             │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ /faq page with FAQChatWidget                            │    │
+│  │ - Chat interface                                        │    │
+│  │ - Message history display                               │    │
+│  │ - LLM selection dropdown                                │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              │                                  │
+│                              ▼                                  │
+│  Server Actions Layer                                           │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ /app/actions/rag.ts                                     │    │
+│  │ - handleFAQChat()                                       │    │
+│  │ - ingestFAQContent()                                    │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              │                                  │
+│                              ▼                                  │
+│  RAG Service Layer (Server Components)                          │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ /lib/rag/                                               │    │
+│  │ ├── faq-retriever.ts                                    │    │
+│  │ ├── chat-service.ts                                     │    │
+│  │ ├── vector-store.ts                                     │    │
+│  │ └── llm-providers.ts                                    │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              │                                  │
+│                              ▼                                  │
+│  Data Layer                                                     │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ Vector Database (ChromaDB)                              │    │
+│  │ PostgreSQL (chat history, metadata)                     │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+
+Data Flow: 
+1. User types question in FAQ chat
+   ↓
+2. Client component calls handleFAQChat() Server Action
+   ↓
+3. Server Action authenticates user (existing auth system)
+   ↓
+4. RAGService processes question:
+   - Convert question to embedding
+   - Search vector database for relevant FAQ chunks
+   - Retrieve conversation history from PostgreSQL
+   ↓
+5. LLM generates response with context
+   ↓
+6. Save conversation to database
+   ↓
+7. Return response to client
+   ↓
+8. Update chat interface with new message

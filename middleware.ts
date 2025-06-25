@@ -6,10 +6,11 @@ export function middleware(request: NextRequest) {
   // Middleware logic
   if (request.nextUrl.pathname.startsWith('/api')) {
     const authHeader = request.headers.get('Authorization')
+    const cookieHeader = request.cookies.get('auth_token')
 
-    if (!authHeader) {
+    if (!authHeader && !cookieHeader) {
       return NextResponse.json(
-        { success: false, messsage: 'Authorization header is required' },
+        { success: false, messsage: 'Authorization header or auth_token cookie is required' },
         { status: 401 }
       )
     }

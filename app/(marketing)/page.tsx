@@ -1,8 +1,13 @@
 import Link from 'next/link'
 import { Timestamp } from '../components/Timestamp'
 import Button from '../components/ui/Button'
+import { getCurrentUser } from '@/lib/dal'
+
+export const dynamic = "force-dynamic";
 
 export default async function LandingPage() {
+  const user = await getCurrentUser()
+
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
@@ -19,9 +24,15 @@ export default async function LandingPage() {
               your projects with ease.
             </p>
             <div className="mt-10">
-              <Link href="/signup">
-                <Button size="lg">Get Started</Button>
-              </Link>
+              {user ? (
+                <Link href="/dashboard">
+                  <Button size="lg">Go to Dashboard</Button>
+                </Link>
+              ) : (
+                <Link href="/signup">
+                  <Button size="lg">Get Started</Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
